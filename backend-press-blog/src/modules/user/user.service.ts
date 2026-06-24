@@ -1,8 +1,8 @@
 import httpStatus from 'http-status';
-import { prisma } from "../../lib/prisma";
-import { SelfErrorHandler } from "../../utils/handleErrors";
-import { IUser } from "./user.interface"
 import bcrypt from 'bcryptjs';
+import { IUser } from "./user.interface"
+import { prisma } from "../../lib/prisma";
+import { SelfErrorHandler } from '../../utils/handleErrors';
 import config from '../../config';
 
 const registerUserIntoDB = async (payload: IUser) => {
@@ -24,17 +24,23 @@ const registerUserIntoDB = async (payload: IUser) => {
             email,
             password: hashPassword,
             activeStatus,
-            role
+            role,
+            profile: {
+                create: {
+                    profilePhoto,
+                    bio
+                }
+            }
         }
     });
 
-    await prisma.profile.create({
-        data: {
-            userId: createUser.id,
-            profilePhoto,
-            bio
-        }
-    });
+    // await prisma.profile.create({
+    //     data: {
+    //         userId: createUser.id,
+    //         profilePhoto,
+    //         bio
+    //     }
+    // });
 
     const user = await prisma.user.findUnique({
         where: { id: createUser.id },
@@ -49,4 +55,4 @@ const registerUserIntoDB = async (payload: IUser) => {
 export const userService = {
     registerUserIntoDB,
 
-}
+};

@@ -5,9 +5,25 @@ model User {
     password     String
     activeStatus ActiveStatus @default(ACTIVE)
     role         Role         @default(USER)
+
     profile      Profile?
-    createdAt    DateTime     @default(now())
-    updatedAt    DateTime     @updatedAt
+    loginHistory Login[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 
     @@map("users")
+}
+
+model Login {
+    id String @id @default(uuid())
+
+    userId String
+    user   User   @relation(fields: [userId], references: [id])
+
+    email   String
+    role    Role
+    loginAt DateTime @default(now())
+
+    @@map("logins")
 }
