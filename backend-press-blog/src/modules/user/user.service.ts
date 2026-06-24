@@ -61,9 +61,31 @@ const getMyProfileIntoDB = async (userId: string) => {
     return user;
 };
 
+const updateMyProfileIntoDB = async (userId: string, payload: IUser) => {
+    const { name, email, password, profilePhoto, bio } = payload;
+
+    const hashPassword = await bcrypt.hash(password, Number(config.security.bcryptSaltRounds));
+
+    const updatedUser = await prisma.user.update({
+        where: { id: userId },
+        data: {
+            name, email, password: hashPassword,
+            profile: {
+                update: {
+                    profilePhoto, bio
+                }
+            }
+        },
+        omit: { password: true },
+        include: { profile: true }
+    });
+
+    return updatedUser;
+};
+
 
 export const userService = {
     registerUserIntoDB,
     getMyProfileIntoDB,
-
+    updateMyProfileIntoDB,
 };

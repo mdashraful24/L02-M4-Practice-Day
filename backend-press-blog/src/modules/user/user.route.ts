@@ -8,6 +8,7 @@ const route = Router();
 
 route.post("/register", userController.registerUser);
 route.get("/me", authProtector(Role.ADMIN, Role.AUTHOR, Role.USER), userController.getMyProfile);
+route.put("/my-profile", authProtector(Role.ADMIN, Role.AUTHOR, Role.USER), userController.updateMyProfile);
 
 
 export const userRoute = route;
