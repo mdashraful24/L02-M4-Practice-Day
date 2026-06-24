@@ -1,4 +1,4 @@
-type ErrorHandle = {
+type TErrorHandle = {
     message: string;
     statusCode?: number
 };
@@ -12,7 +12,7 @@ export class SelfErrorHandler extends Error {
     };
 };
 
-export const handleErrors = (error: unknown): ErrorHandle => {
+export const handleErrors = (error: unknown): TErrorHandle => {
     if (error instanceof SelfErrorHandler) {
         return {
             message: error.message,
