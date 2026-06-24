@@ -24,6 +24,14 @@ const loginUserIntoDB = async (payload: IUser) => {
         throw new SelfErrorHandler("Incorrect password", httpStatus.UNAUTHORIZED);
     }
 
+    await prisma.login.create({
+        data: {
+            userId: user.id,
+            email: user.email,
+            role: user.role,
+        },
+    });
+
     const jwtPayload = {
         id: user.id,
         name: user.name,
