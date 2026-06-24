@@ -4,6 +4,7 @@ import config from "./config";
 import cookieParser from "cookie-parser";
 import { userRoute } from "./modules/user/user.route";
 import { authRouter } from "./modules/auth/auth.route";
+import globalErrHandler from "./middleware/global.error.handler";
 
 const app: Application = express();
 
@@ -24,6 +25,9 @@ app.get("/", (req: Request, res: Response) => {
 // User Routes
 app.use("/api/users", userRoute);
 app.use("/api/auth", authRouter);
+
+// Global Error Handle
+app.use(globalErrHandler);
 
 
 export default app;
