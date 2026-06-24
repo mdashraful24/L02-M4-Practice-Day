@@ -14,8 +14,20 @@ const registerUser = catchAsync(async (req, res) => {
     });
 });
 
+const getMyProfile = catchAsync(async (req, res) => {
+    const result = await userService.getMyProfileIntoDB(req.user?.id as string);
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "User profile fetched successfully",
+        data: result,
+    });
+});
+
 
 export const userController = {
     registerUser,
+    getMyProfile,
 
 }

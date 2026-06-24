@@ -1,3 +1,4 @@
+import httpStatus from 'http-status';
 import jwt, { JwtPayload, SignOptions } from "jsonwebtoken";
 
 const createToken = (payload: JwtPayload, secret: string, expiresIn: SignOptions) => {
@@ -10,8 +11,25 @@ const createToken = (payload: JwtPayload, secret: string, expiresIn: SignOptions
     return token;
 };
 
+const verifyToken = (token: string, secret: string) => {
+    try {
+        const verifiedToken = jwt.verify(token, secret);
+
+        return {
+            success: true,
+            data: verifiedToken
+        };
+    } catch (error: any) {
+        return {
+            statusCode: httpStatus.UNAUTHORIZED,
+            success: false,
+            error: error.message
+        }
+    }
+};
+
 
 export const jwtUtils = {
     createToken,
-
-}
+    verifyToken
+};
