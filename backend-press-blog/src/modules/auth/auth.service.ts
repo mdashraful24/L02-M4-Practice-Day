@@ -3,6 +3,9 @@ import { prisma } from "../../lib/prisma";
 import { SelfErrorHandler } from "../../utils/handleErrors";
 import { IUser } from "../user/user.interface"
 import bcrypt from 'bcryptjs';
+import { jwtUtils } from '../../utils/jwt';
+import config from '../../config';
+import { SignOptions } from 'jsonwebtoken';
 
 const loginUserIntoDB = async (payload: IUser) => {
     const { email, password } = payload;
@@ -21,7 +24,29 @@ const loginUserIntoDB = async (payload: IUser) => {
         throw new SelfErrorHandler("Incorrect password", httpStatus.UNAUTHORIZED);
     }
 
-    return user;
+    const jwtPayload = {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+    };
+
+    const accessToken = jwtUtils.createToken(
+        jwtPayload,
+        config.jwt.accessSecret,
+        config.jwt.accessExpiresIn as SignOptions
+    );
+
+    const refreshToken = jwtUtils.createToken(
+        jwtPayload,
+        config.jwt.refreshSecret,
+        config.jwt.refreshExpiresIn as SignOptions
+    )
+
+    return {
+        accessToken,
+        refreshToken
+    };
 };
 
 
