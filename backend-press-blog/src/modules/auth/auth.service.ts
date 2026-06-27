@@ -58,7 +58,6 @@ const loginUserIntoDB = async (payload: IUser) => {
 };
 
 const generateRefreshToken = async (token: string) => {
-
     if (!token) {
         throw new SelfErrorHandler("You are not logged in. Please log in to access this resource.", httpStatus.UNAUTHORIZED);
     }
