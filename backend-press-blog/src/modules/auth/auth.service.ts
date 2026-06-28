@@ -1,13 +1,13 @@
 import httpStatus from 'http-status';
 import { prisma } from "../../lib/prisma";
 import { SelfErrorHandler } from "../../utils/handleErrors";
-import { IUser } from "../user/user.interface"
+import { ILoginUser } from './auth.interface';
 import bcrypt from 'bcryptjs';
 import { jwtUtils } from '../../utils/jwt';
 import config from '../../config';
 import { JwtPayload, SignOptions } from 'jsonwebtoken';
 
-const loginUserIntoDB = async (payload: IUser) => {
+const loginUserIntoDB = async (payload: ILoginUser) => {
     const { email, password } = payload;
 
     const user = await prisma.user.findUniqueOrThrow({
@@ -57,37 +57,27 @@ const loginUserIntoDB = async (payload: IUser) => {
     };
 };
 
-const generateRefreshToken = async (token: string) => {
-    if (!token) {
-        throw new SelfErrorHandler("You are not logged in. Please log in to access this resource.", httpStatus.UNAUTHORIZED);
+const generateRefreshToken = async (refreshToken: string) => {
+    const verifiedRefreshToken = jwtUtils.verifyToken(refreshToken, config.jwt.refreshSecret);
+
+    if (!verifiedRefreshToken.success) {
+        throw new SelfErrorHandler(verifiedRefreshToken.error);
     }
 
-    const verifiedToken = jwtUtils.verifyToken(token, config.jwt.refreshSecret);
+    const { id } = verifiedRefreshToken.data as JwtPayload;
 
-    if (!verifiedToken.success) {
-        throw new SelfErrorHandler(verifiedToken.error);
-    }
-
-    const { id, name, email, role } = verifiedToken.data as JwtPayload;
-
-    if (!role) {
-        throw new SelfErrorHandler("Forbidden. You don't have permission to access this resource.", httpStatus.FORBIDDEN);
-    }
-
-    const user = await prisma.user.findUnique({
-        where: { id, name, email, role }
+    const user = await prisma.user.findUniqueOrThrow({
+        where: {
+            id
+        }
     });
-
-    if (!user) {
-        throw new SelfErrorHandler("User not found. Please log in again.", httpStatus.BAD_REQUEST);
-    }
 
     if (user.activeStatus === "BLOCKED") {
         throw new SelfErrorHandler("Your account has been blocked. Please contact support.", httpStatus.FORBIDDEN);
     }
 
     const jwtPayload = {
-        id: user.id,
+        id,
         name: user.name,
         email: user.email,
         role: user.role
@@ -99,7 +89,9 @@ const generateRefreshToken = async (token: string) => {
         config.jwt.accessExpiresIn as SignOptions
     );
 
-    return { accessToken };
+    return {
+        accessToken
+    };
 };
 
 
