@@ -5,6 +5,8 @@ import cookieParser from "cookie-parser";
 import { userRoute } from "./modules/user/user.route";
 import { authRouter } from "./modules/auth/auth.route";
 import globalErrHandler from "./middleware/global.error.handler";
+import { postRoutes } from "./modules/post/post.route";
+import { commentRoutes } from "./modules/comment/comment.route";
 
 const app: Application = express();
 
@@ -25,6 +27,8 @@ app.get("/", (req: Request, res: Response) => {
 // User Routes
 app.use("/api/users", userRoute);
 app.use("/api/auth", authRouter);
+app.use("/api/posts", postRoutes);
+app.use("/api/comments", commentRoutes);
 
 // Global Error Handle
 app.use(globalErrHandler);

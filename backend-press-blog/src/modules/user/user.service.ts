@@ -1,6 +1,6 @@
 import httpStatus from 'http-status';
 import bcrypt from 'bcryptjs';
-import { IUser } from "./user.interface"
+import { IUpdateUser, IUser } from "./user.interface"
 import { prisma } from "../../lib/prisma";
 import { SelfErrorHandler } from '../../utils/handleErrors';
 import config from '../../config';
@@ -61,18 +61,28 @@ const getMyProfileIntoDB = async (userId: string) => {
     return user;
 };
 
-const updateMyProfileIntoDB = async (userId: string, payload: IUser) => {
+const updateMyProfileIntoDB = async (userId: string, payload: IUpdateUser) => {
     const { name, email, password, profilePhoto, bio } = payload;
 
-    const hashPassword = await bcrypt.hash(password, Number(config.security.bcryptSaltRounds));
+    let hashPassword;
+
+    if (password) {
+        hashPassword = await bcrypt.hash(
+            password,
+            Number(config.security.bcryptSaltRounds)
+        );
+    }
 
     const updatedUser = await prisma.user.update({
         where: { id: userId },
         data: {
-            name, email, password: hashPassword,
+            name,
+            email,
+            ...(hashPassword && { password: hashPassword }),
             profile: {
                 update: {
-                    profilePhoto, bio
+                    profilePhoto,
+                    bio
                 }
             }
         },
