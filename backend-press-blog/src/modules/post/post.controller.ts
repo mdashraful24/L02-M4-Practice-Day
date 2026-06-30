@@ -50,7 +50,20 @@ const getMyPost = catchAsync(async (req, res) => {
 });
 
 const getSinglePost = catchAsync(async(req, res)=>{
+    const postId = req.params.postId;
 
+    if (!postId) {
+        throw new SelfErrorHandler("Post id required in params");
+    }
+
+    const result = await postService.getSinglePostFromDB(postId as string);
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Single post retrieved successfully",
+        data: result
+    });
 });
 
 const updatePost = catchAsync(async(req, res)=>{

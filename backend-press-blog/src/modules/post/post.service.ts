@@ -1,3 +1,4 @@
+import { CommentStatus } from "../../../generated/prisma/enums";
 import { prisma } from "../../lib/prisma";
 import { SelfErrorHandler } from "../../utils/handleErrors";
 import { IPost, IPostUpdate } from "./post.interface";
@@ -58,6 +59,43 @@ const getMyPostFromDB = async (authorId: string) => {
     return myPost;
 };
 
+const getSinglePostFromDB = async (postId: string) => {
+    const transactionResult = await prisma.$transaction(
+        async (tx) => {
+            await tx.post.update({
+                where: { id: postId },
+                data: {
+                    views: {
+                        increment: 1
+                    },
+                },
+            });
+
+            const post = await tx.post.findUniqueOrThrow({
+                where: {
+                    id: postId
+                },
+                include: {
+                    author: {
+                        omit: {
+                            password: true
+                        }
+                    },
+                    comments: {
+                        where: {
+                            status: CommentStatus.APPROVED
+                        },
+                    },
+                },
+            });
+            
+            return post;
+        }
+    );
+
+    return transactionResult;
+};
+
 const updatePostFromDB = async (postId: string, authorId: string, isAdmin: boolean, payload: IPostUpdate) => {
     const findPost = await prisma.post.findUniqueOrThrow({
         where: { id: postId }
@@ -111,6 +149,7 @@ export const postService = {
     createPostIntoDB,
     getAllPostsFromDB,
     getMyPostFromDB,
+    getSinglePostFromDB,
     updatePostFromDB,
     deletePostFromDB
 };
