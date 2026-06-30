@@ -17,8 +17,23 @@ const createPost = catchAsync(async (req, res) => {
     });
 });
 
+const createMultiPost = catchAsync(async (req, res) => {
+    const id = req.user?.id;
+
+    const result = await postService.createMultiPostIntoDB(req.body, id as string);
+
+    sendResponse(res, {
+        statusCode: httpStatus.CREATED,
+        success: true,
+        message: "All post created successfully",
+        data: result
+    });
+});
+
 const getAllPosts = catchAsync(async (req, res) => {
-    const result = await postService.getAllPostsFromDB();
+    const query = req.query;
+
+    const result = await postService.getAllPostsFromDB(query);
 
     if (result.length === 0) {
         throw new SelfErrorHandler("Post not found", httpStatus.NOT_FOUND);
@@ -49,7 +64,7 @@ const getMyPost = catchAsync(async (req, res) => {
     });
 });
 
-const getPostStats = catchAsync(async(req, res)=>{
+const getPostStats = catchAsync(async (req, res) => {
     const result = await postService.getPostStatsFromDB();
 
     sendResponse(res, {
@@ -60,7 +75,7 @@ const getPostStats = catchAsync(async(req, res)=>{
     });
 });
 
-const getSinglePost = catchAsync(async(req, res)=>{
+const getSinglePost = catchAsync(async (req, res) => {
     const postId = req.params.postId;
 
     if (!postId) {
@@ -77,12 +92,12 @@ const getSinglePost = catchAsync(async(req, res)=>{
     });
 });
 
-const updatePost = catchAsync(async(req, res)=>{
+const updatePost = catchAsync(async (req, res) => {
     const postId = req.params.postId as string;
     const authorId = req.user?.id as string;
     const isAdmin = req.user?.role === "ADMIN";
 
-    if(!postId){
+    if (!postId) {
         throw new SelfErrorHandler("Post id required in params");
     }
 
@@ -96,7 +111,7 @@ const updatePost = catchAsync(async(req, res)=>{
     });
 });
 
-const deletePost = catchAsync(async(req, res )=>{
+const deletePost = catchAsync(async (req, res) => {
     const postId = req.params.postId as string;
     const authorId = req.user?.id as string;
     const isAdmin = req.user?.role === "ADMIN";
@@ -118,6 +133,7 @@ const deletePost = catchAsync(async(req, res )=>{
 
 export const postController = {
     createPost,
+    createMultiPost,
     getAllPosts,
     getMyPost,
     getPostStats,

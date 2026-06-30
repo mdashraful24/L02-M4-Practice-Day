@@ -1,7 +1,8 @@
 import { CommentStatus, PostStatus } from "../../../generated/prisma/enums";
+import { PostWhereInput } from "../../../generated/prisma/models";
 import { prisma } from "../../lib/prisma";
 import { SelfErrorHandler } from "../../utils/handleErrors";
-import { IPost, IPostUpdate } from "./post.interface";
+import { IPost, IPostQuery, IPostUpdate } from "./post.interface";
 
 const createPostIntoDB = async (payLoad: IPost, userId: string) => {
     const post = await prisma.post.create({
@@ -14,23 +15,116 @@ const createPostIntoDB = async (payLoad: IPost, userId: string) => {
     return post;
 };
 
-const getAllPostsFromDB = async () => {
-    const posts = await prisma.post.findMany({
-        include: {
-            author: {
-                omit: {
-                    id: true,
-                    email: true,
-                    password: true,
-                    activeStatus: true,
-                    role: true,
-                    createdAt: true,
-                    updatedAt: true
-                }
-            },
-            comment: true
-        }
+const createMultiPostIntoDB = async (payload: IPost[], userId: string) => {
+    const post = await prisma.post.createManyAndReturn({
+        data: payload.map(post => ({
+            ...post,
+            authorId: userId
+        }))
     });
+
+    return post;
+};
+
+const getAllPostsFromDB = async (query: IPostQuery) => {
+    const limit = query.limit ? Number(query.limit) : 10;
+    const page = query.page ? Number(query.page) : 1;
+    const skipPage = (page - 1) * limit;
+
+    const sortBy = query.sortBy ? query.sortBy : "createdAt";
+    const sortOrder = query.sortOrder ? query.sortOrder : "desc";
+
+    const tags = query.tags ? JSON.parse(query.tags as string) : null;
+    const tagsArray = Array.isArray(tags) ? tags : [];
+
+    const andConditions: PostWhereInput[] = [];
+
+    if (query.searchTerm) {
+        andConditions.push({
+            OR: [
+                {
+                    title: {
+                        contains: query.searchTerm,
+                        mode: "insensitive"
+                    }
+                },
+                {
+                    content: {
+                        contains: query.searchTerm,
+                        mode: "insensitive"
+                    }
+                }
+            ]
+        })
+    }
+
+    if (query.title) {
+        andConditions.push({
+            title: query.title
+        })
+    }
+
+    if (query.content) {
+        andConditions.push({
+            content: query.content
+        })
+    }
+
+    if (query.authorId) {
+        andConditions.push({
+            authorId: query.authorId
+        })
+    }
+
+    if (query.isFeatured) {
+        andConditions.push({
+            isFeatured: Boolean(query.isFeatured)
+        })
+    }
+
+    if (query.tags) {
+        andConditions.push({
+            tags: {
+                hasSome: tagsArray
+            }
+        })
+    }
+
+    if (query.status) {
+        andConditions.push({
+            status: query.status
+        })
+    }
+
+    const posts = await prisma.post.findMany(
+        {
+            where: {
+                AND: andConditions
+            },
+
+            take: limit,
+            skip: skipPage,
+
+            orderBy: {
+                [sortBy]: sortOrder
+            },
+
+            include: {
+                author: {
+                    omit: {
+                        id: true,
+                        email: true,
+                        password: true,
+                        activeStatus: true,
+                        role: true,
+                        createdAt: true,
+                        updatedAt: true
+                    }
+                },
+                comment: true
+            }
+        }
+    );
 
     return posts;
 };
@@ -212,6 +306,7 @@ const deletePostFromDB = async (postId: string, authorId: string, isAdmin: boole
 
 export const postService = {
     createPostIntoDB,
+    createMultiPostIntoDB,
     getAllPostsFromDB,
     getMyPostFromDB,
     getPostStatsFromDB,

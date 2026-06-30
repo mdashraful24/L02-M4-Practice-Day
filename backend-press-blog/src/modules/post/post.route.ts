@@ -6,6 +6,7 @@ import { postController } from "./post.controller";
 const router = Router();
 
 router.post("/", authProtector(Role.USER, Role.ADMIN), postController.createPost);
+router.post("/multi-post/", authProtector(Role.USER, Role.ADMIN), postController.createMultiPost);
 router.get("/", authProtector(Role.USER, Role.ADMIN), postController.getAllPosts);
 router.get("/stats", authProtector(Role.ADMIN), postController.getPostStats);
 router.get("/my-posts", authProtector(Role.USER, Role.ADMIN), postController.getMyPost);
