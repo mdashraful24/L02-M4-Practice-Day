@@ -8,13 +8,15 @@ export const catchAsync = (fn: RequestHandler): RequestHandler => {
         try {
             await fn(req, res, next);
         } catch (error) {
-            const err = handleErrors(error);
+            // const err = handleErrors(error);
 
-            sendResponse(res, {
-                statusCode: err.statusCode || httpStatus.INTERNAL_SERVER_ERROR,
-                success: false,
-                message: err.message
-            });
+            // sendResponse(res, {
+            //     statusCode: err.statusCode || httpStatus.INTERNAL_SERVER_ERROR,
+            //     success: false,
+            //     message: err.message
+            // });
+
+            next(error);
         }
     };
 };

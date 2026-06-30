@@ -7,6 +7,7 @@ import { authRouter } from "./modules/auth/auth.route";
 import globalErrHandler from "./middleware/global.error.handler";
 import { postRoutes } from "./modules/post/post.route";
 import { commentRoutes } from "./modules/comment/comment.route";
+import { notFound } from "./middleware/notFound";
 
 const app: Application = express();
 
@@ -29,6 +30,9 @@ app.use("/api/users", userRoute);
 app.use("/api/auth", authRouter);
 app.use("/api/posts", postRoutes);
 app.use("/api/comments", commentRoutes);
+
+// Route Not Found
+app.use(notFound);
 
 // Global Error Handle
 app.use(globalErrHandler);

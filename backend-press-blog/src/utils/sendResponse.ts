@@ -7,6 +7,7 @@ type IResponse<T, E> = {
     data?: T;
     error?: E;
     author?: string;
+    errorStack?: string;
 };
 
 export const sendResponse = <T, E>(res: Response, resData: IResponse<T, E>) => {
@@ -15,6 +16,7 @@ export const sendResponse = <T, E>(res: Response, resData: IResponse<T, E>) => {
         message: resData.message,
         data: resData.data,
         error: resData.error,
+        errorStack: resData.error,
         author: resData.author
     });
 };
