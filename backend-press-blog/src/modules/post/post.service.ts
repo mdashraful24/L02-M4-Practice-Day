@@ -1,4 +1,4 @@
-import { CommentStatus } from "../../../generated/prisma/enums";
+import { CommentStatus, PostStatus } from "../../../generated/prisma/enums";
 import { prisma } from "../../lib/prisma";
 import { SelfErrorHandler } from "../../utils/handleErrors";
 import { IPost, IPostUpdate } from "./post.interface";
@@ -59,6 +59,71 @@ const getMyPostFromDB = async (authorId: string) => {
     return myPost;
 };
 
+const getPostStatsFromDB = async () => {
+    const transactionResult = await prisma.$transaction(
+        async (tx) => {
+            const [
+                totalPosts,
+                totalPublishedPosts,
+                totalDraftedPost,
+                totalArchivedPosts,
+                totalComments,
+                totalApprovedComments,
+                totalRejectedComments,
+                totalPostViewsAggregate
+            ] = await Promise.all([
+                await tx.post.count(),
+                await tx.post.count({
+                    where: {
+                        status: PostStatus.PUBLISHED
+                    }
+                }),
+                await tx.post.count({
+                    where: {
+                        status: PostStatus.DRAFT
+                    }
+                }),
+                await tx.post.count({
+                    where: {
+                        status: PostStatus.ARCHIVED
+                    }
+                }),
+
+                await tx.comment.count(),
+                await tx.comment.count({
+                    where: {
+                        status: CommentStatus.APPROVED
+                    }
+                }),
+                await tx.comment.count({
+                    where: {
+                        status: CommentStatus.REJECT
+                    }
+                }),
+
+                await tx.post.aggregate({
+                    _sum: {
+                        views: true
+                    }
+                }),
+            ]);
+
+            return {
+                totalPosts,
+                totalPublishedPosts,
+                totalDraftedPost,
+                totalArchivedPosts,
+                totalComments,
+                totalApprovedComments,
+                totalRejectedComments,
+                totalViews: totalPostViewsAggregate._sum.views
+            }
+        }
+    );
+
+    return transactionResult;
+};
+
 const getSinglePostFromDB = async (postId: string) => {
     const transactionResult = await prisma.$transaction(
         async (tx) => {
@@ -88,7 +153,7 @@ const getSinglePostFromDB = async (postId: string) => {
                     },
                 },
             });
-            
+
             return post;
         }
     );
@@ -149,6 +214,7 @@ export const postService = {
     createPostIntoDB,
     getAllPostsFromDB,
     getMyPostFromDB,
+    getPostStatsFromDB,
     getSinglePostFromDB,
     updatePostFromDB,
     deletePostFromDB
